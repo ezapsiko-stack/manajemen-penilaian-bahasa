@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Nilai Tugas Harian Kelompok</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for wide tables */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl border border-slate-700 pointer-events-none">
+        <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+        <span id="toast-message" class="text-sm font-medium">Pesan notifikasi</span>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="bg-indigo-600 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-500/50 rounded-lg backdrop-blur-sm">
+                        <i data-lucide="graduation-cap" class="w-7 h-7 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight sm:text-xl">GradeTracker Pro</h1>
+                        <p class="text-xs text-indigo-200 hidden sm:block">Manajemen Nilai Tugas Kelompok</p>
+                    </div>
+                </div>
+
+                <!-- Action Toolbar Header -->
+                <div class="flex items-center gap-2">
+                    <button onclick="exportToCSV()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg transition-colors shadow-sm" title="Ekspor Data ke CSV">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span class="hidden md:inline">Ekspor CSV</span>
+                    </button>
+                    <button onclick="confirmResetData()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium bg-rose-500/20 hover:bg-rose-500/30 text-rose-100 rounded-lg transition-colors border border-rose-400/30" title="Reset Semua Data">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span class="hidden md:inline">Reset Data</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Top Overview & Controls Bar -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Stat 1 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500">Total Kelompok</p>
+                    <p id="stat-total-groups" class="text-2xl font-bold text-slate-800">0</p>
+                </div>
+            </div>
+
+            <!-- Stat 2 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+                <div class="p-3 bg-teal-50 text-teal-600 rounded-xl">
+                    <i data-lucide="user-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500">Total Siswa</p>
+                    <p id="stat-total-students" class="text-2xl font-bold text-slate-800">0</p>
+                </div>
+            </div>
+
+            <!-- Stat 3 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+                <div class="p-3 bg-sky-50 text-sky-600 rounded-xl">
+                    <i data-lucide="book-open" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500">Total Tugas</p>
+                    <p id="stat-total-tasks" class="text-2xl font-bold text-slate-800">0</p>
+                </div>
+            </div>
+
+            <!-- Stat 4 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                    <i data-lucide="award" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500">Rata-rata Keseluruhan</p>
+                    <p id="stat-overall-avg" class="text-2xl font-bold text-slate-800">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter, Search & Quick Actions -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            
+            <!-- Filter & Search Group -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-grow max-w-2xl">
+                <!-- Search Input -->
+                <div class="relative flex-grow">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="search-input" oninput="handleSearch()" placeholder="Cari nama siswa atau kelompok..." class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                </div>
+
+                <!-- Group Filter Dropdown -->
+                <div class="sm:w-56">
+                    <select id="filter-group" onchange="handleFilterChange()" class="w-full py-2 px-3 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-slate-700">
+                        <option value="ALL">Semua Kelompok</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="openModalGroup()" class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-sm">
+                    <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                    <span>Tambah Kelompok</span>
+                </button>
+
+                <button onclick="openModalTask()" class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors shadow-sm">
+                    <i data-lucide="file-plus" class="w-4 h-4"></i>
+                    <span>Tambah Tugas</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="border-b border-slate-200 flex items-center justify-between overflow-x-auto custom-scrollbar">
+            <div class="flex space-x-1" id="tab-container">
+                <button onclick="switchTab('matrix')" id="tab-btn-matrix" class="py-2.5 px-4 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-2 whitespace-nowrap transition-colors">
+                    <i data-lucide="table" class="w-4 h-4"></i>
+                    Matriks Rekapitulasi Nilai
+                </button>
+                <button onclick="switchTab('groups')" id="tab-btn-groups" class="py-2.5 px-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 flex items-center gap-2 whitespace-nowrap transition-colors">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    Kelola Kelompok & Siswa
+                </button>
+                <button onclick="switchTab('tasks')" id="tab-btn-tasks" class="py-2.5 px-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 flex items-center gap-2 whitespace-nowrap transition-colors">
+                    <i data-lucide="list-checks" class="w-4 h-4"></i>
+                    Kelola Daftar Tugas
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT 1: MATRIX / REKAPITULASI TAB -->
+        <div id="content-matrix" class="space-y-6">
+            <div id="matrix-wrapper" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="grid" class="w-5 h-5 text-indigo-600"></i>
+                        <h2 class="font-semibold text-slate-800">Tabel Nilai Interaktif</h2>
+                        <span class="text-xs text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">(Edit nilai langsung di dalam tabel)</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-sm border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="bg-slate-100/80 text-slate-600 font-semibold border-b border-slate-200">
+                                <th class="p-3.5 min-w-[160px] sticky left-0 bg-slate-100 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Siswa</th>
+                                <th class="p-3.5 min-w-[140px]">Kelompok</th>
+                                <!-- Dynamic Task Headers will be injected here -->
+                                <th id="dynamic-task-headers" class="contents"></th>
+                                <th class="p-3.5 w-28 text-center bg-indigo-50/50 text-indigo-900 border-l border-slate-200">Total</th>
+                                <th class="p-3.5 w-28 text-center bg-indigo-50/50 text-indigo-900">Rata-rata</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrix-tbody" class="divide-y divide-slate-200 text-slate-700">
+                            <!-- Matrix rows generated by JavaScript -->
+                        </tbody>
+                        <tfoot id="matrix-tfoot" class="bg-slate-50 font-semibold text-slate-800 border-t-2 border-slate-300">
+                            <!-- Group / Task Averages Footer generated by JS -->
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Empty State for Matrix -->
+                <div id="matrix-empty" class="hidden p-12 text-center">
+                    <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="inbox" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-slate-700">Belum Ada Data Siswa/Tugas</h3>
+                    <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">Silakan tambahkan kelompok, anggota siswa, dan daftar tugas harian untuk mulai mengisi nilai.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT 2: MANAGE GROUPS & STUDENTS -->
+        <div id="content-groups" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Kelola Kelompok Belajar & Anggota</h2>
+                    <p class="text-xs text-slate-500">Atur struktur kelompok dan daftar anggota siswa di setiap kelompok.</p>
+                </div>
+            </div>
+
+            <!-- Group Cards Grid -->
+            <div id="groups-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Group cards generated by JavaScript -->
+            </div>
+
+            <div id="groups-empty" class="hidden bg-white p-12 rounded-xl border border-slate-200 text-center">
+                <i data-lucide="users" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
+                <p class="text-slate-600 font-medium">Belum ada kelompok dibuat</p>
+                <button onclick="openModalGroup()" class="mt-3 text-sm text-indigo-600 font-medium hover:underline inline-flex items-center gap-1">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Buat Kelompok Sekarang
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT 3: MANAGE TASKS -->
+        <div id="content-tasks" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Daftar Kategori / Tugas Harian</h2>
+                    <p class="text-xs text-slate-500">Kelola daftar komponen nilai harian seperti tugas, kuis, atau presentasi.</p>
+                </div>
+                <button onclick="openModalTask()" class="px-3.5 py-2 text-sm bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium shadow-sm inline-flex items-center gap-1.5">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Tambah Tugas
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+                        <tr>
+                            <th class="p-3.5">Nama Tugas</th>
+                            <th class="p-3.5">Bobot / Deskripsi</th>
+                            <th class="p-3.5 text-center">Tanggal Dibuat</th>
+                            <th class="p-3.5 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tasks-tbody" class="divide-y divide-slate-200">
+                        <!-- Task rows injected by JS -->
+                    </tbody>
+                </table>
+                <div id="tasks-empty" class="hidden p-8 text-center text-slate-500">
+                    Belum ada tugas yang didaftarkan.
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: Group (Create/Edit) -->
+    <div id="modal-group" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden transform transition-all">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <h3 id="modal-group-title" class="font-bold text-slate-800">Tambah Kelompok</h3>
+                <button onclick="closeModal('modal-group')" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="form-group" onsubmit="saveGroup(event)" class="p-6 space-y-4">
+                <input type="hidden" id="group-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Kelompok *</label>
+                    <input type="text" id="group-name" required placeholder="Contoh: Kelompok Alpha" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Deskripsi / Catatan Singkat</label>
+                    <textarea id="group-desc" rows="2" placeholder="Topik bahasan atau catatan tambahan..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-group')" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">Simpan Kelompok</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Student (Create/Edit) -->
+    <div id="modal-student" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden transform transition-all">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <h3 id="modal-student-title" class="font-bold text-slate-800">Tambah Anggota Siswa</h3>
+                <button onclick="closeModal('modal-student')" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="form-student" onsubmit="saveStudent(event)" class="p-6 space-y-4">
+                <input type="hidden" id="student-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Kelompok *</label>
+                    <select id="student-group-id" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Siswa *</label>
+                    <input type="text" id="student-name" required placeholder="Nama Lengkap Siswa" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">NIS / ID Siswa (Opsional)</label>
+                    <input type="text" id="student-nis" placeholder="Contoh: 2024001" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-student')" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">Simpan Siswa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Task (Create/Edit) -->
+    <div id="modal-task" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden transform transition-all">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <h3 id="modal-task-title" class="font-bold text-slate-800">Tambah Tugas Harian</h3>
+                <button onclick="closeModal('modal-task')" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="form-task" onsubmit="saveTask(event)" class="p-6 space-y-4">
+                <input type="hidden" id="task-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Tugas / Kategori *</label>
+                    <input type="text" id="task-name" required placeholder="Misal: Tugas 1, Presentasi, Kuis" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan / Bobot (Opsional)</label>
+                    <input type="text" id="task-desc" placeholder="Misal: Bab 1-2, Bobot 20%" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-task')" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-medium bg-teal-600 hover:bg-teal-700 text-white rounded-lg">Simpan Tugas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="modal-confirm" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 id="confirm-title" class="text-base font-bold text-slate-800 mb-1">Konfirmasi</h3>
+            <p id="confirm-message" class="text-xs text-slate-500 mb-6">Apakah Anda yakin ingin menghapus data ini?</p>
+            <div class="flex items-center justify-center gap-3">
+                <button onclick="closeModal('modal-confirm')" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg w-full">Batal</button>
+                <button id="confirm-action-btn" class="px-4 py-2 text-xs font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-lg w-full">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Key LocalStorage
+        const STORAGE_KEY = 'GROUP_GRADE_TRACKER_DATA_V1';
+
+        // Initial Application State
+        let appData = {
+            groups: [],
+            students: [],
+            tasks: [],
+            grades: {} // Structure: { [studentId_taskId]: number }
+        };
+
+        // Filter & Search State
+        let currentSearch = '';
+        let currentGroupFilter = 'ALL';
+        let currentTab = 'matrix';
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            if (appData.groups.length === 0 && appData.tasks.length === 0) {
+                seedInitialData();
+            }
+            renderAll();
+            lucide.createIcons();
+        });
+
+        // Seed Sample Data for Demo
+        function seedInitialData() {
+            appData = {
+                groups: [
+                    { id: 'g1', name: 'Kelompok 1 (Web Dev)', desc: 'Proyek Aplikasi Frontend' },
+                    { id: 'g2', name: 'Kelompok 2 (Database)', desc: 'Perancangan ERD & SQL' }
+                ],
+                students: [
+                    { id: 's1', groupId: 'g1', name: 'Ahmad Fauzi', nis: '101' },
+                    { id: 's2', groupId: 'g1', name: 'Budi Santoso', nis: '102' },
+                    { id: 's3', groupId: 'g1', name: 'Citra Dewi', nis: '103' },
+                    { id: 's4', groupId: 'g2', name: 'Dina Lestari', nis: '104' },
+                    { id: 's5', groupId: 'g2', name: 'Eko Prasetyo', nis: '105' }
+                ],
+                tasks: [
+                    { id: 't1', name: 'Tugas 1: UI Sketch', desc: 'Desain Wireframe', createdAt: '2024-03-01' },
+                    { id: 't2', name: 'Tugas 2: HTML/CSS', desc: 'Implementasi Responsive', createdAt: '2024-03-05' },
+                    { id: 't3', name: 'Presentasi', desc: 'Demo Hasil Kerja', createdAt: '2024-03-10' }
+                ],
+                grades: {
+                    's1_t1': 85, 's1_t2': 90, 's1_t3': 88,
+                    's2_t1': 78, 's2_t2': 82, 's2_t3': 80,
+                    's3_t1': 92, 's3_t2': 95, 's3_t3': 90,
+                    's4_t1': 88, 's4_t2': 84, 's4_t3': 85,
+                    's5_t1': 75, 's5_t2': 80, 's5_t3': 78
+                }
+            };
+            saveToStorage();
+        }
+
+        // --- LOCAL STORAGE HELPERS ---
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        }
+
+        function loadFromStorage() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                try {
+                    appData = JSON.parse(raw);
+                } catch (e) {
+                    console.error("Gagal membaca LocalStorage", e);
+                }
+            }
+        }
+
+        function confirmResetData() {
+            showConfirmModal(
+                'Reset Seluruh Data?',
+                'Tindakan ini akan menghapus seluruh kelompok, siswa, tugas, dan nilai. Data yang dihapus tidak dapat dikembalikan.',
+                () => {
+                    localStorage.removeItem(STORAGE_KEY);
+                    appData = { groups: [], students: [], tasks: [], grades: {} };
+                    saveToStorage();
+                    renderAll();
+                    showToast('Semua data berhasil dibersihkan');
+                }
+            );
+        }
+
+        // --- RENDER CONTROL ---
+        function renderAll() {
+            updateOverviewStats();
+            updateGroupFilterDropdown();
+            renderMatrixTable();
+            renderGroupsGrid();
+            renderTasksTable();
+            lucide.createIcons();
+        }
+
+        // --- OVERVIEW STATS ---
+        function updateOverviewStats() {
+            document.getElementById('stat-total-groups').innerText = appData.groups.length;
+            document.getElementById('stat-total-students').innerText = appData.students.length;
+            document.getElementById('stat-total-tasks').innerText = appData.tasks.length;
+
+            // Calculate Overall Average
+            const gradeValues = Object.values(appData.grades).filter(v => typeof v === 'number' && !isNaN(v));
+            if (gradeValues.length > 0) {
+                const avg = gradeValues.reduce((a, b) => a + b, 0) / gradeValues.length;
+                document.getElementById('stat-overall-avg').innerText = avg.toFixed(1);
+            } else {
+                document.getElementById('stat-overall-avg').innerText = '0';
+            }
+        }
+
+        // --- FILTER & SEARCH ---
+        function updateGroupFilterDropdown() {
+            const select = document.getElementById('filter-group');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="ALL">Semua Kelompok</option>';
+
+            appData.groups.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g.id;
+                opt.innerText = g.name;
+                select.appendChild(opt);
+            });
+
+            select.value = currentVal || 'ALL';
+        }
+
+        function handleSearch() {
+            currentSearch = document.getElementById('search-input').value.toLowerCase().trim();
+            renderMatrixTable();
+            renderGroupsGrid();
+        }
+
+        function handleFilterChange() {
+            currentGroupFilter = document.getElementById('filter-group').value;
+            renderMatrixTable();
+            renderGroupsGrid();
+        }
+
+        // --- TAB NAVIGATION ---
+        function switchTab(tab) {
+            currentTab = tab;
+            const tabs = ['matrix', 'groups', 'tasks'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const content = document.getElementById(`content-${t}`);
+                if (t === tab) {
+                    btn.className = 'py-2.5 px-4 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-2 whitespace-nowrap transition-colors';
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = 'py-2.5 px-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 flex items-center gap-2 whitespace-nowrap transition-colors';
+                    content.classList.add('hidden');
+                }
+            });
+        }
+
+        // --- TAB 1: RENDER MATRIX TABLE ---
+        function renderMatrixTable() {
+            const dynamicHeaders = document.getElementById('dynamic-task-headers');
+            const tbody = document.getElementById('matrix-tbody');
+            const tfoot = document.getElementById('matrix-tfoot');
+            const emptyState = document.getElementById('matrix-empty');
+
+            dynamicHeaders.innerHTML = '';
+            tbody.innerHTML = '';
+            tfoot.innerHTML = '';
+
+            // Render Dynamic Task Headers
+            appData.tasks.forEach(task => {
+                const th = document.createElement('th');
+                th.className = 'p-3.5 text-center min-w-[110px] bg-slate-100/90';
+                th.innerHTML = `
+                    <div class="font-semibold text-slate-700">${escapeHtml(task.name)}</div>
+                    ${task.desc ? `<div class="text-[10px] font-normal text-slate-400 truncate max-w-[100px] mx-auto">${escapeHtml(task.desc)}</div>` : ''}
+                `;
+                dynamicHeaders.appendChild(th);
+            });
+
+            // Filter Students
+            let filteredStudents = appData.students.filter(student => {
+                const group = appData.groups.find(g => g.id === student.groupId);
+                const groupName = group ? group.name.toLowerCase() : '';
+                const studentName = student.name.toLowerCase();
+
+                const matchesSearch = studentName.includes(currentSearch) || groupName.includes(currentSearch);
+                const matchesGroup = (currentGroupFilter === 'ALL') || (student.groupId === currentGroupFilter);
+
+                return matchesSearch && matchesGroup;
+            });
+
+            if (filteredStudents.length === 0 || appData.tasks.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Task sum accumulator for footer task averages
+            const taskTotals = {};
+            const taskCounts = {};
+            appData.tasks.forEach(t => { taskTotals[t.id] = 0; taskCounts[t.id] = 0; });
+
+            // Render Rows
+            filteredStudents.forEach(student => {
+                const group = appData.groups.find(g => g.id === student.groupId);
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition-colors';
+
+                let rowSum = 0;
+                let rowCount = 0;
+
+                let taskInputsHtml = '';
+                appData.tasks.forEach(task => {
+                    const gradeKey = `${student.id}_${task.id}`;
+                    const gradeVal = appData.grades[gradeKey] !== undefined ? appData.grades[gradeKey] : '';
+
+                    if (gradeVal !== '' && !isNaN(gradeVal)) {
+                        rowSum += Number(gradeVal);
+                        rowCount++;
+                        taskTotals[task.id] += Number(gradeVal);
+                        taskCounts[task.id]++;
+                    }
+
+                    taskInputsHtml += `
+                        <td class="p-2 text-center">
+                            <input 
+                                type="number" 
+                                min="0" 
+                                max="100" 
+                                step="0.1" 
+                                value="${gradeVal}"
+                                onblur="updateGrade('${student.id}', '${task.id}', this.value)"
+                                onkeydown="handleInputKeydown(event, this)"
+                                class="w-16 py-1 px-1.5 text-center text-sm border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:bg-white bg-slate-50/50 font-medium transition-all"
+                                placeholder="-"
+                            />
+                        </td>
+                    `;
+                });
+
+                const rowAvg = rowCount > 0 ? (rowSum / rowCount).toFixed(1) : '-';
+                const rowAvgClass = rowCount > 0 
+                    ? (rowAvg >= 75 ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold') 
+                    : 'text-slate-400';
+
+                tr.innerHTML = `
+                    <td class="p-3.5 font-medium text-slate-800 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                        <div>${escapeHtml(student.name)}</div>
+                        ${student.nis ? `<div class="text-[11px] text-slate-400 font-normal">NIS: ${escapeHtml(student.nis)}</div>` : ''}
+                    </td>
+                    <td class="p-3.5 text-xs text-slate-600">
+                        <span class="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md font-medium">
+                            ${group ? escapeHtml(group.name) : 'Tanpa Kelompok'}
+                        </span>
+                    </td>
+                    ${taskInputsHtml}
+                    <td class="p-3.5 text-center font-semibold text-slate-700 bg-indigo-50/30 border-l border-slate-200">
+                        ${rowSum || '-'}
+                    </td>
+                    <td class="p-3.5 text-center bg-indigo-50/30 ${rowAvgClass}">
+                        ${rowAvg}
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            // Render Footer (Averages per Task)
+            if (filteredStudents.length > 0 && appData.tasks.length > 0) {
+                let footTasksHtml = '';
+                let totalScoreSum = 0;
+                let totalScoreCount = 0;
+
+                appData.tasks.forEach(task => {
+                    const count = taskCounts[task.id];
+                    const avg = count > 0 ? (taskTotals[task.id] / count).toFixed(1) : '-';
+                    if (count > 0) {
+                        totalScoreSum += taskTotals[task.id];
+                        totalScoreCount += count;
+                    }
+                    footTasksHtml += `<td class="p-3 text-center text-indigo-900 font-bold">${avg}</td>`;
+                });
+
+                const grandAvg = totalScoreCount > 0 ? (totalScoreSum / totalScoreCount).toFixed(1) : '-';
+
+                tfoot.innerHTML = `
+                    <tr>
+                        <td class="p-3.5 sticky left-0 bg-slate-50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Rata-rata Tugas</td>
+                        <td class="p-3.5 text-xs text-slate-500 font-normal">Semua Siswa Terfilter</td>
+                        ${footTasksHtml}
+                        <td class="p-3 text-center bg-indigo-100/50 text-indigo-950 border-l border-slate-200" colspan="2">
+                            Rata-rata Total: <span class="text-indigo-600 font-extrabold ml-1">${grandAvg}</span>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Inline Grade Update
+        function updateGrade(studentId, taskId, val) {
+            const key = `${studentId}_${taskId}`;
+            if (val === '' || val === null) {
+                delete appData.grades[key];
+            } else {
+                const num = parseFloat(val);
+                if (!isNaN(num)) {
+                    appData.grades[key] = Math.min(100, Math.max(0, num)); // Clamp 0-100
+                }
+            }
+            saveToStorage();
+            updateOverviewStats();
+            renderMatrixTable();
+        }
+
+        function handleInputKeydown(e, input) {
+            if (e.key === 'Enter') {
+                input.blur();
+            }
+        }
+
+        // --- TAB 2: MANAGE GROUPS & STUDENTS ---
+        function renderGroupsGrid() {
+            const container = document.getElementById('groups-grid');
+            const emptyState = document.getElementById('groups-empty');
+            container.innerHTML = '';
+
+            let filteredGroups = appData.groups.filter(g => {
+                const matchesFilter = (currentGroupFilter === 'ALL') || (g.id === currentGroupFilter);
+                const matchesSearch = g.name.toLowerCase().includes(currentSearch) || 
+                                     appData.students.some(s => s.groupId === g.id && s.name.toLowerCase().includes(currentSearch));
+                return matchesFilter && matchesSearch;
+            });
+
+            if (filteredGroups.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filteredGroups.forEach(group => {
+                const groupStudents = appData.students.filter(s => s.groupId === group.id);
+
+                // Calculate Group Average
+                let groupSum = 0;
+                let groupCount = 0;
+                groupStudents.forEach(s => {
+                    appData.tasks.forEach(t => {
+                        const val = appData.grades[`${s.id}_${t.id}`];
+                        if (val !== undefined && !isNaN(val)) {
+                            groupSum += val;
+                            groupCount++;
+                        }
+                    });
+                });
+                const groupAvg = groupCount > 0 ? (groupSum / groupCount).toFixed(1) : '-';
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between';
+
+                let studentListHtml = '';
+                if (groupStudents.length === 0) {
+                    studentListHtml = `<p class="text-xs text-slate-400 italic py-2">Belum ada anggota dalam kelompok ini.</p>`;
+                } else {
+                    studentListHtml = groupStudents.map(student => `
+                        <div class="flex items-center justify-between py-1.5 px-2 hover:bg-slate-50 rounded-lg text-xs group/item transition-colors">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span class="font-medium text-slate-700">${escapeHtml(student.name)}</span>
+                                ${student.nis ? `<span class="text-[10px] text-slate-400">(${escapeHtml(student.nis)})</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-1 opacity-80 group-hover/item:opacity-100">
+                                <button onclick="openModalStudent('${group.id}', '${student.id}')" class="p-1 text-slate-400 hover:text-indigo-600 rounded">
+                                    <i data-lucide="pencil" class="w-3 h-3"></i>
+                                </button>
+                                <button onclick="confirmDeleteStudent('${student.id}')" class="p-1 text-slate-400 hover:text-rose-600 rounded">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Card Header -->
+                        <div class="p-4 bg-slate-50/80 border-b border-slate-200 flex items-start justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    ${escapeHtml(group.name)}
+                                </h3>
+                                ${group.desc ? `<p class="text-xs text-slate-500 mt-0.5 line-clamp-1">${escapeHtml(group.desc)}</p>` : ''}
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button onclick="openModalGroup('${group.id}')" class="p-1 text-slate-400 hover:text-indigo-600 rounded" title="Edit Kelompok">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="confirmDeleteGroup('${group.id}')" class="p-1 text-slate-400 hover:text-rose-600 rounded" title="Hapus Kelompok">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Group Stats Badge -->
+                        <div class="px-4 py-2 bg-indigo-50/40 border-b border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
+                            <span>Anggota: ${groupStudents.length} Siswa</span>
+                            <span>Rata-rata: <strong class="text-indigo-600 font-semibold">${groupAvg}</strong></span>
+                        </div>
+
+                        <!-- Members List -->
+                        <div class="p-4 space-y-1">
+                            <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Daftar Anggota</div>
+                            ${studentListHtml}
+                        </div>
+                    </div>
+
+                    <!-- Card Footer Action -->
+                    <div class="p-3 bg-slate-50 border-t border-slate-200">
+                        <button onclick="openModalStudent('${group.id}')" class="w-full py-1.5 px-3 text-xs font-medium text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Tambah Anggota
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        // --- TAB 3: MANAGE TASKS ---
+        function renderTasksTable() {
+            const tbody = document.getElementById('tasks-tbody');
+            const emptyState = document.getElementById('tasks-empty');
+            tbody.innerHTML = '';
+
+            if (appData.tasks.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            appData.tasks.forEach(task => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+
+                tr.innerHTML = `
+                    <td class="p-3.5 font-medium text-slate-800">${escapeHtml(task.name)}</td>
+                    <td class="p-3.5 text-xs text-slate-500">${task.desc ? escapeHtml(task.desc) : '-'}</td>
+                    <td class="p-3.5 text-center text-xs text-slate-400">${task.createdAt || '-'}</td>
+                    <td class="p-3.5 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="openModalTask('${task.id}')" class="p-1 text-slate-400 hover:text-indigo-600 rounded" title="Edit Tugas">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="confirmDeleteTask('${task.id}')" class="p-1 text-slate-400 hover:text-rose-600 rounded" title="Hapus Tugas">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        }
+
+        // --- MODAL ACTIONS & LOGIC ---
+
+        // Group Modal
+        function openModalGroup(groupId = null) {
+            document.getElementById('form-group').reset();
+            if (groupId) {
+                const group = appData.groups.find(g => g.id === groupId);
+                if (group) {
+                    document.getElementById('group-id').value = group.id;
+                    document.getElementById('group-name').value = group.name;
+                    document.getElementById('group-desc').value = group.desc || '';
+                    document.getElementById('modal-group-title').innerText = 'Edit Kelompok';
+                }
+            } else {
+                document.getElementById('group-id').value = '';
+                document.getElementById('modal-group-title').innerText = 'Tambah Kelompok Baru';
+            }
+            showModal('modal-group');
+        }
+
+        function saveGroup(e) {
+            e.preventDefault();
+            const id = document.getElementById('group-id').value;
+            const name = document.getElementById('group-name').value.trim();
+            const desc = document.getElementById('group-desc').value.trim();
+
+            if (id) {
+                const group = appData.groups.find(g => g.id === id);
+                if (group) {
+                    group.name = name;
+                    group.desc = desc;
+                }
+            } else {
+                const newGroup = {
+                    id: 'g_' + Date.now(),
+                    name,
+                    desc
+                };
+                appData.groups.push(newGroup);
+            }
+
+            saveToStorage();
+            closeModal('modal-group');
+            renderAll();
+            showToast('Data kelompok berhasil disimpan');
+        }
+
+        function confirmDeleteGroup(groupId) {
+            const group = appData.groups.find(g => g.id === groupId);
+            if (!group) return;
+
+            showConfirmModal(
+                `Hapus ${group.name}?`,
+                'Seluruh data anggota siswa dan nilai di dalam kelompok ini juga akan dihapus secara permanen.',
+                () => {
+                    // Remove group
+                    appData.groups = appData.groups.filter(g => g.id !== groupId);
+                    // Remove students in group
+                    const studentIds = appData.students.filter(s => s.groupId === groupId).map(s => s.id);
+                    appData.students = appData.students.filter(s => s.groupId !== groupId);
+                    // Remove grades of removed students
+                    Object.keys(appData.grades).forEach(key => {
+                        const [sId] = key.split('_');
+                        if (studentIds.includes(sId)) {
+                            delete appData.grades[key];
+                        }
+                    });
+
+                    saveToStorage();
+                    renderAll();
+                    showToast('Kelompok berhasil dihapus');
+                }
+            );
+        }
+
+        // Student Modal
+        function openModalStudent(defaultGroupId = null, studentId = null) {
+            document.getElementById('form-student').reset();
+
+            // Populate group select
+            const groupSelect = document.getElementById('student-group-id');
+            groupSelect.innerHTML = '';
+            appData.groups.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g.id;
+                opt.innerText = g.name;
+                groupSelect.appendChild(opt);
+            });
+
+            if (studentId) {
+                const student = appData.students.find(s => s.id === studentId);
+                if (student) {
+                    document.getElementById('student-id').value = student.id;
+                    document.getElementById('student-group-id').value = student.groupId;
+                    document.getElementById('student-name').value = student.name;
+                    document.getElementById('student-nis').value = student.nis || '';
+                    document.getElementById('modal-student-title').innerText = 'Edit Data Siswa';
+                }
+            } else {
+                document.getElementById('student-id').value = '';
+                if (defaultGroupId) {
+                    document.getElementById('student-group-id').value = defaultGroupId;
+                }
+                document.getElementById('modal-student-title').innerText = 'Tambah Siswa Baru';
+            }
+
+            showModal('modal-student');
+        }
+
+        function saveStudent(e) {
+            e.preventDefault();
+            const id = document.getElementById('student-id').value;
+            const groupId = document.getElementById('student-group-id').value;
+            const name = document.getElementById('student-name').value.trim();
+            const nis = document.getElementById('student-nis').value.trim();
+
+            if (!groupId) {
+                alert('Silakan buat kelompok terlebih dahulu!');
+                return;
+            }
+
+            if (id) {
+                const student = appData.students.find(s => s.id === id);
+                if (student) {
+                    student.groupId = groupId;
+                    student.name = name;
+                    student.nis = nis;
+                }
+            } else {
+                const newStudent = {
+                    id: 's_' + Date.now(),
+                    groupId,
+                    name,
+                    nis
+                };
+                appData.students.push(newStudent);
+            }
+
+            saveToStorage();
+            closeModal('modal-student');
+            renderAll();
+            showToast('Data siswa berhasil disimpan');
+        }
+
+        function confirmDeleteStudent(studentId) {
+            const student = appData.students.find(s => s.id === studentId);
+            if (!student) return;
+
+            showConfirmModal(
+                `Hapus Siswa ${student.name}?`,
+                'Seluruh nilai siswa ini akan dihapus dari rekapitulasi.',
+                () => {
+                    appData.students = appData.students.filter(s => s.id !== studentId);
+                    Object.keys(appData.grades).forEach(key => {
+                        if (key.startsWith(`${studentId}_`)) {
+                            delete appData.grades[key];
+                        }
+                    });
+
+                    saveToStorage();
+                    renderAll();
+                    showToast('Siswa berhasil dihapus');
+                }
+            );
+        }
+
+        // Task Modal
+        function openModalTask(taskId = null) {
+            document.getElementById('form-task').reset();
+            if (taskId) {
+                const task = appData.tasks.find(t => t.id === taskId);
+                if (task) {
+                    document.getElementById('task-id').value = task.id;
+                    document.getElementById('task-name').value = task.name;
+                    document.getElementById('task-desc').value = task.desc || '';
+                    document.getElementById('modal-task-title').innerText = 'Edit Tugas Harian';
+                }
+            } else {
+                document.getElementById('task-id').value = '';
+                document.getElementById('modal-task-title').innerText = 'Tambah Tugas Baru';
+            }
+            showModal('modal-task');
+        }
+
+        function saveTask(e) {
+            e.preventDefault();
+            const id = document.getElementById('task-id').value;
+            const name = document.getElementById('task-name').value.trim();
+            const desc = document.getElementById('task-desc').value.trim();
+
+            if (id) {
+                const task = appData.tasks.find(t => t.id === id);
+                if (task) {
+                    task.name = name;
+                    task.desc = desc;
+                }
+            } else {
+                const newTask = {
+                    id: 't_' + Date.now(),
+                    name,
+                    desc,
+                    createdAt: new Date().toISOString().split('T')[0]
+                };
+                appData.tasks.push(newTask);
+            }
+
+            saveToStorage();
+            closeModal('modal-task');
+            renderAll();
+            showToast('Tugas harian berhasil disimpan');
+        }
+
+        function confirmDeleteTask(taskId) {
+            const task = appData.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            showConfirmModal(
+                `Hapus ${task.name}?`,
+                'Seluruh nilai tugas ini di semua siswa akan ikut terhapus.',
+                () => {
+                    appData.tasks = appData.tasks.filter(t => t.id !== taskId);
+                    Object.keys(appData.grades).forEach(key => {
+                        if (key.endsWith(`_${taskId}`)) {
+                            delete appData.grades[key];
+                        }
+                    });
+
+                    saveToStorage();
+                    renderAll();
+                    showToast('Tugas berhasil dihapus');
+                }
+            );
+        }
+
+        // --- EXPORT TO CSV ---
+        function exportToCSV() {
+            if (appData.students.length === 0) {
+                alert('Tidak ada data siswa untuk diekspor!');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            // CSV Header Row
+            const headers = ['Nama Siswa', 'NIS', 'Kelompok', ...appData.tasks.map(t => `"${t.name}"`), 'Total Nilai', 'Rata-rata'];
+            csvContent += headers.join(',') + "\r\n";
+
+            // CSV Data Rows
+            appData.students.forEach(student => {
+                const group = appData.groups.find(g => g.id === student.groupId);
+                let rowSum = 0;
+                let rowCount = 0;
+
+                const taskScores = appData.tasks.map(task => {
+                    const gradeVal = appData.grades[`${student.id}_${task.id}`];
+                    if (gradeVal !== undefined && !isNaN(gradeVal)) {
+                        rowSum += Number(gradeVal);
+                        rowCount++;
+                        return gradeVal;
+                    }
+                    return '';
+                });
+
+                const rowAvg = rowCount > 0 ? (rowSum / rowCount).toFixed(1) : '';
+
+                const row = [
+                    `"${student.name}"`,
+                    `"${student.nis || ''}"`,
+                    `"${group ? group.name : ''}"`,
+                    ...taskScores,
+                    rowSum || '',
+                    rowAvg
+                ];
+
+                csvContent += row.join(',') + "\r\n";
+            });
+
+            // Trigger Download
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Rekap_Nilai_Kelompok_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('File CSV berhasil diunduh');
+        }
+
+        // --- GENERAL UI MODAL & TOAST HELPERS ---
+        function showModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            
+            const actionBtn = document.getElementById('confirm-action-btn');
+            // Clone button to remove previous listeners
+            const newBtn = actionBtn.cloneNode(true);
+            actionBtn.parentNode.replaceChild(newBtn, actionBtn);
+
+            newBtn.addEventListener('click', () => {
+                onConfirm();
+                closeModal('modal-confirm');
+            });
+
+            showModal('modal-confirm');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
